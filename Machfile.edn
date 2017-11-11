@@ -1,0 +1,15 @@
+{mach/m2 [[aero "1.1.2"]
+          [roll "0.0.7"]]
+
+ mach/props [config (:deployment (aero.core/read-config "resources/config.edn" {:profile :prod}))
+             version (roll.core/git-version)
+             s3-artifact (str "edge-" version "-standalone.jar")
+             uberjar "target/cornerstone-app.jar"]
+
+ info (println "S3 Release Artifact:" s3-artifact)
+
+ roll-info (clojure.pprint/pprint (roll.core/preprocess config))
+
+ uberjar {product uberjar
+          novelty (not (mach.core/file-exists? uberjar))
+          update! #$ ["lein uberjar"]}}
