@@ -2,7 +2,8 @@
   (:gen-class)
   (:require [clojure.tools.cli :as cli]
             [cornerstone.core]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre]
+            [mount.core :as mount]))
 
 
 (def cli-options

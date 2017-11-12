@@ -6,8 +6,11 @@
 
 
 (defn root-handler [req]
-  (-> (response/file-response "resources/public/index.html")
-      (response/content-type "text/html")))
+  #_(-> (response/file-response "resources/public/index.html")
+      (response/content-type "text/html"))
+  {:status  200
+   :headers {"Content-Type" "text/html"}
+   :body    "<h1>cornerstone</h1>"})
 
 
 (defroutes routes
