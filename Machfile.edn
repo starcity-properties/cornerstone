@@ -38,8 +38,8 @@
                      ;; configure `:route-53-aliases` in the Roll
                      ;; config, which requires a route-53 zone-id you
                      ;; must manually configure.
-                     ;; (assoc-in [:services :edge :launch-config :args :env-vars :edge-host]
-                     ;;           (roll.utils/$ [:aws-alb :edge :dns-name]))
+                     (assoc-in [:services :cornerstone :launch-config :args :env-vars :cornerstone-host]
+                               (roll.utils/$ [:aws-alb :cornerstone :dns-name]))
 
                      (roll.core/deployment->tf)
                      (roll.core/->tf-json))}}
