@@ -1,0 +1,193 @@
+{
+    "provider": {
+        "aws": {
+            "profile": "default",
+            "region": "us-west-2"
+        }
+    },
+    "locals": {
+        "vpc_id": "vpc-cadde9ac",
+        "subnet_ids": [
+            "subnet-1b80fe7d",
+            "subnet-ef8b15a7",
+            "subnet-ce3c0595"
+        ]
+    },
+    "resource": {
+        "aws_security_group": {
+            "cornerstone_80": {
+                "name": "dev-cornerstone-80-alb-sg",
+                "description": "controls access to the application load balancer",
+                "vpc_id": "${local.vpc_id}",
+                "ingress": {
+                    "protocol": "tcp",
+                    "from_port": 80,
+                    "to_port": 80,
+                    "cidr_blocks": [
+                        "0.0.0.0/0"
+                    ]
+                },
+                "egress": {
+                    "protocol": "-1",
+                    "from_port": 0,
+                    "to_port": 0,
+                    "cidr_blocks": [
+                        "0.0.0.0/0"
+                    ]
+                }
+            },
+            "cornerstone": {
+                "name": "dev-cornerstone",
+                "description": "Allow access to dev-cornerstone application",
+                "vpc_id": "${local.vpc_id}",
+                "ingress": [
+                    {
+                        "from_port": 22,
+                        "to_port": 22,
+                        "protocol": "tcp",
+                        "cidr_blocks": [
+                            "0.0.0.0/0"
+                        ]
+                    },
+                    {
+                        "from_port": 8080,
+                        "to_port": 8080,
+                        "protocol": "tcp",
+                        "cidr_blocks": [
+                            "0.0.0.0/0"
+                        ]
+                    }
+                ],
+                "egress": [
+                    {
+                        "from_port": 0,
+                        "to_port": 65535,
+                        "protocol": "tcp",
+                        "cidr_blocks": [
+                            "0.0.0.0/0"
+                        ]
+                    }
+                ],
+                "tags": {
+                    "name": "dev-cornerstone"
+                }
+            }
+        },
+        "aws_alb_target_group": {
+            "cornerstone": {
+                "name": "dev-cornerstone-0-alb-tg",
+                "port": 8080,
+                "protocol": "HTTP",
+                "vpc_id": "${local.vpc_id}"
+            }
+        },
+        "aws_iam_role_policy": {
+            "cornerstone": {
+                "name": "dev-cornerstone",
+                "role": "${aws_iam_role.cornerstone.id}",
+                "policy": "{\n    \"Statement\": [\n        {\n            \"Effect\": \"Allow\",\n            \"Action\": [\n                \"s3:GetObject\"\n            ],\n            \"Resource\": [\n                \"arn:aws:s3:::demo-cornerstone-releases/*\"\n            ]\n        }\n    ]\n}"
+            }
+        },
+        "aws_autoscaling_group": {
+            "dev_cornerstone_6b1db78": {
+                "launch_configuration": "${aws_launch_configuration.dev_cornerstone_6b1db78.name}",
+                "availability_zones": [
+                    "us-west-2a",
+                    "us-west-2b",
+                    "us-west-2c"
+                ],
+                "name": "dev-cornerstone-6b1db78",
+                "tag": [
+                    {
+                        "key": "Name",
+                        "value": "dev-cornerstone-6b1db78",
+                        "propagate_at_launch": true
+                    }
+                ],
+                "target_group_arns": [
+                    "${aws_alb_target_group.cornerstone.arn}"
+                ],
+                "vpc_zone_identifier": [
+                    "${local.subnet_ids}"
+                ],
+                "max_size": "2",
+                "lifecycle": {
+                    "create_before_destroy": true
+                },
+                "min_size": "2"
+            }
+        },
+        "aws_alb": {
+            "cornerstone": {
+                "name": "dev-cornerstone-alb",
+                "internal": false,
+                "security_groups": [
+                    "${aws_security_group.cornerstone_80.id}"
+                ],
+                "subnets": [
+                    "${local.subnet_ids}"
+                ],
+                "enable_deletion_protection": false
+            }
+        },
+        "aws_launch_configuration": {
+            "dev_cornerstone_6b1db78": {
+                "key_name": "cornerstone-demo",
+                "associate_public_ip_address": true,
+                "name_prefix": "dev",
+                "image_id": "ami-8803e0f0",
+                "iam_instance_profile": "${aws_iam_instance_profile.cornerstone.name}",
+                "instance_type": "t2.micro",
+                "lifecycle": {
+                    "create_before_destroy": true
+                },
+                "user_data": "#!/bin/bash -ex\n\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\n\napt-get update\napt install -y awscli\napt-get install -y openjdk-8-jdk\n\necho \"Downloading release artifact from s3://demo-cornerstone-releases/edge-6b1db78-standalone.jar\"\nmkdir /releases\n\naws s3 cp s3://demo-cornerstone-releases/edge-6b1db78-standalone.jar /releases\n\necho \"Setting environment variable CORNERSTONE_HOST=${aws_alb.cornerstone.dns_name}\"\nexport CORNERSTONE_HOST=${aws_alb.cornerstone.dns_name}\n\ncd /releases\necho \"Launching...\"\njava  -jar edge-6b1db78-standalone.jar\n",
+                "security_groups": [
+                    "${aws_security_group.cornerstone.id}"
+                ]
+            }
+        },
+        "aws_iam_role": {
+            "cornerstone": {
+                "name": "dev_cornerstone_role",
+                "assume_role_policy": "{\n    \"Version\": \"2012-10-17\",\n    \"Statement\": [\n        {\n            \"Sid\": \"\",\n            \"Action\": \"sts:AssumeRole\",\n            \"Effect\": \"Allow\",\n            \"Principal\": {\n                \"Service\": \"ec2.amazonaws.com\"\n            }\n        }\n    ]\n}"
+            }
+        },
+        "aws_alb_listener": {
+            "cornerstone_0": {
+                "load_balancer_arn": "${aws_alb.cornerstone.arn}",
+                "port": 80,
+                "protocol": "HTTP",
+                "ssl_policy": null,
+                "certificate_arn": null,
+                "default_action": {
+                    "target_group_arn": "${aws_alb_target_group.cornerstone.arn}",
+                    "type": "forward"
+                }
+            }
+        },
+        "aws_route53_record": {
+            "cornerstone_gostarcity_com": {
+                "zone_id": "Z1H1FL5HABSF5",
+                "name": "cornerstone.gostarcity.com",
+                "type": "A",
+                "alias": {
+                    "name": "${lower(aws_alb.cornerstone.dns_name)}",
+                    "zone_id": "${aws_alb.cornerstone.zone_id}",
+                    "evaluate_target_health": false
+                }
+            }
+        },
+        "aws_iam_instance_profile": {
+            "cornerstone": {
+                "name": "dev-cornerstone",
+                "role": "${aws_iam_role.cornerstone.name}"
+            }
+        }
+    },
+    "output": {
+        "cornerstone_alb_dns": {
+            "value": "${aws_alb.cornerstone.dns_name}"
+        }
+    }
+}
