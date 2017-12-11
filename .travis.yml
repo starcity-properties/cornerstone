@@ -1,2 +1,6 @@
 language: clojure
+# use later lein
 lein: 2.7.1
+# build
+script:
+  - lein uberjar
