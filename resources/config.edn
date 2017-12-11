@@ -2,33 +2,4 @@
  #profile {:dev  {:host "localhost:8080"
                   :port 8080}
            :prod {:host #env CORNERSTONE_HOST
-                  :port 8080}}
-
- :deployment {:aws-profile     #env AWS_PROFILE
-              :releases-bucket "demo-cornerstone-releases"
-              :environment     "dev"
-              :vpc-id          :roll.core/default
-
-              :load-balancers {:cornerstone [{:listen   80
-                                              :forward  ^:ref [:web-server :port]
-                                              :protocol "HTTP"}]}
-
-
-              ;; Recommended - setup a route-53 host-name prefix using
-              ;; a manually pre-configured zone-id:
-              ;; :route-53-aliases [{:name-prefix   ^:ref [:web-server :host]
-              ;;                     :zone-id       "Z1H1FL5HABSF5"
-              ;;                     :load-balancer :cornerstone}]
-
-              :services {:cornerstone {:ami            "ami-785db401"
-                                       :instance-type  "t2.micro"
-                                       :key-name       "cornerstone-demo"
-                                       :instance-count 2
-                                       :port           ^:ref [:web-server :port]
-                                       :launch-config  {:template :java8
-                                                        ;; :args     {:jvm-opts ["-Xmx4g"]}
-                                                        }}}
-
-              :asgs [{:service          :cornerstone
-                      :release-artifact :roll.core/latest-release-artifact
-                      :load-balancer    :cornerstone}]}}
+                  :port 8080}}}
