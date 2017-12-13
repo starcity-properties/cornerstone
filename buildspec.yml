@@ -4,18 +4,22 @@ phases:
   install:
     commands:
       - apt-get update -y
-      - apt-get install -y leiningen
+      - apt-get install -y wget
+      - wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+      - chmod +x lein
+      - mv lein /usr/bin/lein
+      - /usr/bin/lein
   pre_build:
     commands:
       - echo Beginning build at `date`
       - echo Installing dependencies...
-      - echo lein deps
+      - echo /usr/bin/lein deps
   build:
     commands:
       - echo Starting tests at `date`
-      - lein test
+      - /usr/bin/lein test
       - echo Starting build at `date`
-      - lein uberjar
+      - /usr/bin/lein uberjar
   post_build:
     commands:
       - echo Build completed at `date`
