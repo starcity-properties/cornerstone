@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - apt-get update -y
+      - apt-get install -y leiningen
+  pre_build:
+    commands:
+      - echo Beginning build at `date`
+      - echo Installing dependencies...
+      - echo lein deps
+  build:
+    commands:
+      - echo Starting tests at `date`
+      - lein test
+      - echo Starting build at `date`
+      - lein uberjar
+  post_build:
+    commands:
+      - echo Build completed at `date`
+artifacts:
+  files:
+    - target/cornerstone-app.jar
+    - scripts/*
+    - appspec.yml
+  discard-paths: yes
