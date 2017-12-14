@@ -6,7 +6,7 @@ phases:
       - apt-get update -y
       - apt-get install -y wget
       - wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
-      - chmod +x lein
+      - chmod a+x lein
       - mv lein /usr/bin/lein
       - /usr/bin/lein
   pre_build:

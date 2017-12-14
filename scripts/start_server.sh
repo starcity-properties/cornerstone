@@ -1,2 +1,2 @@
 #!/bin/bash
-java -jar /releases/cornerstone-app.jar
+java -jar /releases/cornerstone-app.jar &
